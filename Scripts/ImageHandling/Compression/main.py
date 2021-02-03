@@ -18,6 +18,9 @@ class Compression:
     def GetFolders(self):
         return self.folders
 
+    def GetValidFormats(self):
+        return self.formats
+
     def ResizeImg(self, basewidth, img):
         wpercent = (basewidth / float(img.size[0]))
         hsize = int((float(img.size[1]) * float(wpercent)))
@@ -26,33 +29,43 @@ class Compression:
         return img
 
     def Compressing(self, specifyImg, directoryPath):
+        height = width = basewidth = 0
 
-        if directoryPath == "uploads":
-            path = self.pathRoot + 'uploads/'
-            quality = 30
-            basewidth = 500
-        elif directoryPath == "team":
-            path = self.pathRoot + 'team/'
-            quality = 30
-            basewidth = 250
+        config = configparser.ConfigParser()
+        config.read('settings.ini')
+
+        path = self.pathRoot + directoryPath + "/"
+        quality = int(config.get(directoryPath, 'quality'))
+
+        if config.has_option(directoryPath, 'custom_size'):
+            width = int(config.get(directoryPath, 'width'))
+            height = int(config.get(directoryPath, 'height'))
         else:
-            print("Path to directory does not exist!")
+            basewidth = int(config.get(directoryPath, 'basewidth'))
 
         os.chdir(path)
         files = os.listdir()
 
         if not specifyImg:
-            images = [file for file in files if file.endswith(('jpg', 'png', 'jpeg'))]
+            images = [file for file in files if file.endswith(tuple(self.formats))]
 
             for image in images:
                 img = Image.open(image)
-                img = self.ResizeImg(basewidth, img)
+
+                if basewidth > 0:
+                    img = self.ResizeImg(basewidth, img)
+                elif width > 0 and height > 0:
+                    img = img.resize((width, height), Image.ANTIALIAS)
 
                 img.save(image, optimize = True, quality = quality)
 
         else:
             image = Image.open(specifyImg)
-            image = self.ResizeImg(basewidth, image)
+            
+            if basewidth > 0:
+                image = self.ResizeImg(basewidth, image)
+            elif width > 0 and height > 0:
+                image = image.resize((width, height), Image.ANTIALIAS)
             
             image.save(specifyImg, optimize = True, quality = quality)
 
@@ -60,10 +73,10 @@ class Compression:
 start = Compression()
 folders = start.GetFolders()
 
-start.Compressing("", "uploads")
-
-#if sys.argv[0] == "build":
-#    for folder in folders:
-#        start.Compressing("", folder)
-#else:
-#    start.Compressing(sys.argv[0], "upload")
+if sys.argv[0] == "build":
+    for folder in folders:
+        start.Compressing("", folder)
+elif sys.argv[0] == "build" and sys.argv[1] == "all":
+    print("Build all")
+else:
+    start.Compressing(sys.argv[0], "upload")
