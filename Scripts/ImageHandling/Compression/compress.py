@@ -73,9 +73,18 @@ class Compression:
 start = Compression()
 folders = start.GetFolders()
 
-
-if sys.argv[1] == "build"  and sys.argv[2] == "all":
-    for folder in folders:
-        start.Compressing("", folder)
-else:
-    start.Compressing(sys.argv[1], "uploads")
+try:
+    if sys.argv[1] == "build"  and sys.argv[2] == "all":
+        for folder in folders:
+            if os.path.isdir(folder):
+                start.Compressing("", folder)
+            else:
+                print("Cannot build image, " + folder + " does not exist.")
+    else:
+        if os.path.isdir("uploads"):
+            start.Compressing(sys.argv[1], "uploads")
+        else:
+            print("Cannot upload image, uploads directory does not exist.")
+except:
+    e = sys.exc_info()[0]
+    print(e)
