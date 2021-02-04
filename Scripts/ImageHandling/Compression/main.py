@@ -73,10 +73,9 @@ class Compression:
 start = Compression()
 folders = start.GetFolders()
 
-if sys.argv[0] == "build":
+
+if sys.argv[1] == "build"  and sys.argv[2] == "all":
     for folder in folders:
         start.Compressing("", folder)
-elif sys.argv[0] == "build" and sys.argv[1] == "all":
-    print("Build all")
 else:
-    start.Compressing(sys.argv[0], "upload")
+    start.Compressing(sys.argv[1], "uploads")
